@@ -1,0 +1,21 @@
+{
+    "name": "sun-ergo-s/laravel-cart",
+    "description": "Laravel košík",
+    "type": "library",
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^11"
+    },
+    "autoload": {
+        "psr-4": {
+            "SunErgoS\\LaravelCart\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Michal",
+            "email": "mvesely26@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
