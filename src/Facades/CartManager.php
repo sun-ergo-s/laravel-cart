@@ -4,10 +4,10 @@ namespace SunErgoS\LaravelCart\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
-class Cart extends Facade
+class CartManager extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'cart';
+        return 'cartManager';
     }
 }

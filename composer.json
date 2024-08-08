@@ -4,7 +4,9 @@
     "type": "library",
     "require": {
         "php": "^8.3",
-        "illuminate/support": "^11"
+        "illuminate/support": "^11",
+        "illuminate/http": "^11.19",
+        "illuminate/database": "^11.19"
     },
     "autoload": {
         "psr-4": {
@@ -17,5 +19,16 @@
             "email": "mvesely26@gmail.com"
         }
     ],
-    "minimum-stability": "dev"
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SunErgoS\\LaravelCart\\CartManagerServiceProvider"
+            ],
+            "aliases": {
+                "Darujme": "SunErgoS\\LaravelCart\\Facades\\CartManager"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
