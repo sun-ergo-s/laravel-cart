@@ -7,6 +7,9 @@ use SunErgoS\LaravelCart\Cart;
 use Illuminate\Contracts\Http\Kernel;
 use SunErgoS\LaravelCart\Http\Middleware\HandleCartSession;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Auth\Events\Authenticated;
+use Illuminate\Auth\Events\Login;
+use SunErgoS\LaravelCart\Listeners\UpdateCartOnLogin;
 
 class CartManagerServiceProvider extends ServiceProvider {
 
@@ -17,6 +20,13 @@ class CartManagerServiceProvider extends ServiceProvider {
      */
     public function boot()
     {
+
+        $this->app['events']->listen(
+            Login::class, [
+                UpdateCartOnLogin::class, 'handle'
+            ]
+        );
+
         // $this->app->make(Kernel::class)->pushMiddleware(HandleCartSession::class);
     }
 

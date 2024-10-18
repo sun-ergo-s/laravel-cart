@@ -5,6 +5,9 @@ namespace SunErgoS\LaravelCart\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CartInformation;
+use App\Models\Coupon;
+use App\Models\User;
+use SunErgoS\LaravelCart\Models\CartItem;
 
 class Cart extends Model
 {
@@ -22,7 +25,21 @@ class Cart extends Model
     protected $fillable = ['id', 'user_id'];
 
     public function informations(){
-        return $this->hasOne(CartInformation::class, 'cart_id');
+        return $this->hasOne(CartInformation::class, 'cart_id', 'id');
+    }
+
+    public function vouchers(){
+        return $this->belongsToMany(Coupon::class)->orderBy('id', 'ASC');
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function cartItem()
+    {
+        return $this->hasMany(CartItem::class);
     }
     
 }
