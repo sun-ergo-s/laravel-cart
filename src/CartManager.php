@@ -184,7 +184,7 @@ class CartManager {
      *
      * @return CartItem|null
      */
-    public function getCartItem(int $id): ?CartItem
+    private function getCartItem(int $id): ?CartItem
     {
 
         return CartItem::with('product', 'product.discounts')->where([
@@ -519,7 +519,7 @@ class CartManager {
      *
      * @return void
      */
-    public function saveUserDataToCart(CartInformation $ci): void
+    private function saveUserDataToCart(CartInformation $ci): void
     {
 
 		$user = Auth::user();
