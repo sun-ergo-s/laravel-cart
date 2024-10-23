@@ -66,8 +66,14 @@ class CartManager {
              * ako je skutočný počet produktu na sklade, pridá max. počet a hodnotu $quantity_limit
              */
             if ( $quantity > $cartItem->product->pocet_na_sklade) {
+
                 $cartItem->quantity = $cartItem->product->pocet_na_sklade;
                 $quantity_limit = true;
+                $message = array(
+                    "type" => "info",
+                    "value" => "Požadovaný počet sme vám upravili podľa aktuálnych skladových zásob."
+                );
+                
             }else {
                 $cartItem->quantity = $quantity;
             }
@@ -79,6 +85,7 @@ class CartManager {
         }
 
         return [
+            "message" => isset($message) ? $message : NULL,
             "item" => $cartItem,
             "same_quantity" => $quantity_limit ?? false
         ];
