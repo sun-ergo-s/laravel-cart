@@ -40,7 +40,7 @@ class CartManager {
      *
      * @return void
      */
-    public function addOrUpdateItem(int $id, float $price, int $quantity): array
+    public function addOrUpdateItem(int $id, float $price, int $quantity, $finalQuantity = true): array
     {
 
         self::ensureCartExists();
@@ -61,11 +61,15 @@ class CartManager {
 
         }else {
 
+            if(!$finalQuantity){
+                $quantity = $quantity + $cartItem->quantity;
+            }
+
             /**
              * Ak je súčet aktuálneho množstva produktu a pridávaného množstva produktu väčší, 
              * ako je skutočný počet produktu na sklade, pridá max. počet a hodnotu $quantity_limit
              */
-            if ( $quantity > $cartItem->product->pocet_na_sklade) {
+            if ( ($quantity) > $cartItem->product->pocet_na_sklade) {
 
                 $cartItem->quantity = $cartItem->product->pocet_na_sklade;
                 $quantity_limit = true;
