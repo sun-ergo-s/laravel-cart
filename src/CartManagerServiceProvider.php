@@ -2,13 +2,9 @@
 
 namespace SunErgoS\LaravelCart;
 
-use Illuminate\Support\ServiceProvider;
-use SunErgoS\LaravelCart\Cart;
-use Illuminate\Contracts\Http\Kernel;
-use SunErgoS\LaravelCart\Http\Middleware\HandleCartSession;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Support\ServiceProvider;
+use SunErgoS\LaravelCart\Http\Middleware\HandleCartSession;
 use SunErgoS\LaravelCart\Listeners\UpdateCartOnLogin;
 
 class CartManagerServiceProvider extends ServiceProvider {
