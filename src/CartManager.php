@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use SunErgoS\LaravelCart\Models\Cart;
 use SunErgoS\LaravelCart\Models\CartItem;
+use Illuminate\Support\Facades\Log;
 
 class CartManager {
 
@@ -18,18 +19,34 @@ class CartManager {
      */
     public $cartId;
 
+        
+    /**
+     * Method __construct
+     *
+     * @return void
+     */
     public function __construct(){
 
         self::getCartId();
 
     }
-    
-    public function addOrUpdateItem($id, $price, $quantity){
+        
+    /**
+     * Pridá/alebo upraví tovar v košíku
+     *
+     * @param int $id
+     * @param float $price
+     * @param int $quantity
+     *
+     * @return void
+     */
+    public function addOrUpdateItem(int $id, float $price, int $quantity){
 
         self::ensureCartExists();
 
         $cartItem = self::getCartItem($id);
 
+        // ak neexistuje tovar v košíku
         if(!$cartItem){
 
             $cartItem = new CartItem;
@@ -45,13 +62,13 @@ class CartManager {
 
             /**
              * Ak je súčet aktuálneho množstva produktu a pridávaného množstva produktu väčší, 
-             * ako je skutočný počet produktu na skalde
+             * ako je skutočný počet produktu na sklade, pridá max. počet a hodnotu $quantity_limit
              */
-            if ( ($quantity + $cartItem->quantity) > $cartItem->product->pocet_na_sklade) {
+            if ( $quantity > $cartItem->product->pocet_na_sklade) {
                 $cartItem->quantity = $cartItem->product->pocet_na_sklade;
                 $quantity_limit = true;
             }else {
-                $cartItem->quantity += $quantity;
+                $cartItem->quantity = $quantity;
             }
 
             $cartItem->price = $price;
@@ -66,7 +83,12 @@ class CartManager {
         ];
 
     }
-
+    
+    /**
+     * Vypočíta hodnotu košíka
+     *
+     * @return int|array
+     */
     public function cartPrice(){
 
         $items = self::getCartItems();
@@ -123,24 +145,32 @@ class CartManager {
 
                 return $cart_item_price;
             }
-
             
-
         }else {
             return 0;
         }
 
     }
-
+    
+    /**
+     * Obsah košíka
+     *
+     * @return CartItem|null
+     */
     public function getCartItems(){
 
-        $items = CartItem::with('products', 'product')->where('cart_id', $this->cartId)->get();
-
-        return $items;
+        return CartItem::with('products', 'product')->where('cart_id', $this->cartId)->get();
 
     }
-
-    public function getCartItem($id){
+    
+    /**
+     * Konkrétny tovar v košíku
+     *
+     * @param int $id
+     *
+     * @return CartItem|null
+     */
+    public function getCartItem(int $id){
 
         return CartItem::with('product', 'product.discounts')->where([
             ['cart_id', $this->cartId],
@@ -148,27 +178,54 @@ class CartManager {
         ])->first();
 
     }
-
-    public function deleteItem($id){
+    
+    /**
+     * Vymaže tovar z košíka
+     *
+     * @param int $id
+     *
+     * @return void
+     */
+    public function deleteItem(int $id){
 
         $cartItem = CartItem::find($id);
         $cartItem->delete();
 
     }
-
+    
+    /**
+     * Košík pre daného užívateľa s relačnými dátami
+     *
+     * @return Cart|null
+     */
     public function getCart(){
 
         return Cart::with('informations', 'informations.deliveryPoint', 'vouchers', 'cartItem')->find($this->cartId);
 
     }
-
-    public function updatePriceOnCartItem($cartItem, $price){
+    
+    /**
+     * Upraví cenu tovaru v košíku (po prihlásení)
+     *
+     * @param CartItem $cartItem
+     * @param float $price
+     *
+     * @return void
+     */
+    public function updatePriceOnCartItem($cartItem, float $price){
 
         $cartItem->price = $price;
         $cartItem->save();
 
     }
-
+    
+    /**
+     * Spojí tovar v košíku (po prihlásení)
+     *
+     * @param CartItem $previousSessionCartItems
+     *
+     * @return void
+     */
     public function mergeCartItems($previousSessionCartItems){
 
         foreach($previousSessionCartItems as $previousItem){
@@ -199,20 +256,44 @@ class CartManager {
         }
 
     }
+    
+    /**
+     * Spojí informácie týkajúce sa košíka (po prihlásení)
+     *
+     * @param string $sessionCartId
+     * @param int $userId
+     *
+     * @return void
+     */
+    public function mergeCartInformation($sessionCartId, $userId){
 
-    public function mergeCartInformation($sessionCartInformation, $userCartInformation){
+        // $sessionCart = Cart::with("informations")->where("id", $sessionCartId)->first();
 
-        if(!$sessionCartInformation->is($userCartInformation) && $userCartInformation != null){
-            $userCartInformation->delete();
+        $sessionCartInformations = CartInformation::where("cart_id", $sessionCartId)->first();
+        $cartInformations = CartInformation::where("cart_id", $this->cartId)->first();
+
+        Log::info("sessionCartInformations: " .  $sessionCartId . "| cartInformations: " . $this->cartId);
+
+        if(
+            $cartInformations && 
+            $sessionCartInformations && 
+            !$sessionCartInformations->is($cartInformations) )
+        {
+
+            $sessionCartInformations->cart_id = $this->cartId;
+            $sessionCartInformations->save();
+            self::saveUserDataToCart($sessionCartInformations);
+
+            $cartInformations->delete();
         }
 
-        $sessionCartInformation->cart_id = $this->cartId;
-        $sessionCartInformation->save();
-
-        self::saveUserDataToCart($sessionCartInformation);
-
     }
-
+    
+    /**
+     * Id košíka
+     *
+     * @return false|string
+     */
     public function getCartId(){
 
         $userId = Auth::id() ?: false;
@@ -235,38 +316,69 @@ class CartManager {
         return false;
         
     }
+    
+    /**
+     * Spojí tovar v košíkoch (po prihlásení)
+     *
+     * @param string $previousSessionId
+     * @param int $userId
+     *
+     * @return void
+     */
+    public function mergeCartItemsFromPreviousSession(string $previousSessionId, int $userId){
 
-    public function mergeCartItemsFromPreviousSession($previousSessionId){
+        $cart_for_session = Cart::with('informations', 'cartItem')
+            ->where('id', $previousSessionId)
+            ->where('user_id', NULL)
+            ->first();
 
-        $cart_for_session = Cart::with('informations', 'cartItem')->where('id', $previousSessionId)->first();
-
+        Log::info("previousSessionId: " .  $previousSessionId . "| userId: " . $userId);
+                
         if(isset($cart_for_session) && count($cart_for_session->cartItem)){
             self::mergeCartItems($cart_for_session->cartItem);
         }
 
     }
+    
+    /**
+     * Vymaže košík zo session
+     *
+     * @param string $previousSessionId
+     * @param int $userId
+     *
+     * @return void
+     */
+    public function deleteSessionCart(string $previousSessionId, int $userId){
 
-    public function deleteSessionCart($previousSessionId){
-
-        return Cart::where('id', $previousSessionId)->delete();
+        return Cart::where('id', $previousSessionId)
+            ->where('user_id', NULL)
+            ->delete();
 
     }
-
-    public function addUserIdToCartInstance($userId){
+    
+    /**
+     * Pridá číslo zákazníka k existujúcemu košíku
+     *
+     * @param int $userId
+     *
+     * @return void
+     */
+    public function addUserIdToCartInstance(int $userId){
 
         $cart = self::getCart();
 
-        if($cart){
+        if($cart && !$cart->user_id){
             $cart->user_id = $userId;
             $cart->save();
         }
 
     }
-
-    public function updateCartInformation(){
-        return;
-    }
-
+    
+    /**
+     * Zabezpečí, že košík existuje (pri pridaní tovaru)
+     *
+     * @return string
+     */
     public function ensureCartExists(){
 
         if(!$this->cartId){
@@ -297,10 +409,14 @@ class CartManager {
         }
 
     }
-
-    // pri odoslaní objednávky
-    // keď sa odstráni posledný tovar z košíka
-    // dorobiť odstránenie aj vecí súvisiacích s tým
+    
+    /**
+     * Odstráni košík aj iné vzťahy
+     * - ak je košík prázdny
+     * - ak sa objednávka odošle
+     *
+     * @return void
+     */
     public function destroyCart(){
 
         $cart = Cart::with("cartItem", "informations")->find($this->cartId);
@@ -321,13 +437,12 @@ class CartManager {
         session()->forget('cart_session_id');
 
     }
-
-    public function destroyOldCarts(){
-
-        Cart::where('created_at', '<', Carbon::now()->subDay(30))->delete();
-
-    }
-
+    
+    /**
+     * Odstrániť košíky staršie ako 30 dní
+     *
+     * @return void
+     */
     public function removeOldCarts(){
 
 		/**
@@ -379,8 +494,14 @@ class CartManager {
 		return true;
 
 	}
-
-    // DOČASNE
+    
+    /**
+     * Priradí informácie užívateľa k informáciam košíka
+     *
+     * @param CartInformation $ci
+     *
+     * @return void
+     */
     public function saveUserDataToCart($ci){
 
 		$user = Auth::user();
@@ -455,7 +576,7 @@ class CartManager {
 			$ci->deliveryEmail = $ci->deliveryEmail ? $ci->deliveryEmail : $user->email;
 			$ci->deliveryTel = $ci->deliveryTel ? $ci->deliveryTel : $user->phone;
 
-			return $ci->save();
+			$ci->save();
 
 		}
 

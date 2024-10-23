@@ -23,11 +23,14 @@ class UpdateCartOnLogin {
     public function handle(Login $event): void
     {
 
-        // merge cart items
-        // merge informations
-        // a ak existuje teda cart zo session, vymaže aj cart a informácie s tým spojené - dorobiť
-        CartManager::mergeCartItemsFromPreviousSession(session("cart_session_id"));
-        CartManager::deleteSessionCart(session("cart_session_id"));
+        CartManager::addUserIdToCartInstance($event->user->id);
+
+        // ak existuje košík pred prihlásením
+        if(session("cart_session_id")){
+            CartManager::mergeCartItemsFromPreviousSession(session("cart_session_id"), $event->user->id);
+            CartManager::mergeCartInformation(session("cart_session_id"), $event->user->id);
+            CartManager::deleteSessionCart(session("cart_session_id"), $event->user->id);
+        }        
         
         foreach(CartManager::getCartItems() as $cartItem){
 
