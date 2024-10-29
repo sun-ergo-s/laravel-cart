@@ -221,6 +221,16 @@ class CartManager {
     }
     
     /**
+     * Vráti všetky existujúce košíky (pre admin)
+     *
+     * @return Cart[]|null
+     */
+    public function getCarts(): Collection
+    {
+        return Cart::with('user', 'cartitem', 'cartitem.product', 'informations')->get();
+    }
+    
+    /**
      * Upraví cenu tovaru v košíku (po prihlásení)
      *
      * @param CartItem $cartItem
