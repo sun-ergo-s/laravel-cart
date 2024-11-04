@@ -296,22 +296,31 @@ class CartManager {
     public function mergeCartInformation(string $sessionCartId, int $userId): void
     {
 
-        // $sessionCart = Cart::with("informations")->where("id", $sessionCartId)->first();
-
         $sessionCartInformations = CartInformation::where("cart_id", $sessionCartId)->first();
         $cartInformations = CartInformation::where("cart_id", $this->cartId)->first();
 
+        // vysporiadanie sa s dvoma košíkmi (zostane najnovší)
         if(
             $cartInformations && 
             $sessionCartInformations && 
-            !$sessionCartInformations->is($cartInformations) )
+            !$sessionCartInformations->is($cartInformations)
+        )
         {
 
             $sessionCartInformations->cart_id = $this->cartId;
             $sessionCartInformations->save();
-            self::saveUserDataToCart($sessionCartInformations);
 
-            $cartInformations->delete();
+            if($cartInformations){
+                $cartInformations->delete();
+            }
+            
+        }
+
+        // + doplní ešte údaje z user-a
+        $cartInformation = CartInformation::where("cart_id", $this->cartId)->first();
+        
+        if($cartInformation){
+            self::saveUserDataToCart($cartInformation);
         }
 
     }
