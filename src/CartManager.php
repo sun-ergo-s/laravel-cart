@@ -184,7 +184,7 @@ class CartManager {
      *
      * @return CartItem|null
      */
-    private function getCartItem(int $id): ?CartItem
+    public function getCartItem(int $id): ?CartItem
     {
 
         return CartItem::with('product', 'product.discounts')->where([
