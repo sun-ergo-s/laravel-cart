@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\CartInformation;
 use App\Models\Coupon;
 use App\Models\User;
+use App\Models\GiftCard;
 use SunErgoS\LaravelCart\Models\CartItem;
 
 class Cart extends Model
@@ -40,6 +41,11 @@ class Cart extends Model
     public function cartItem()
     {
         return $this->hasMany(CartItem::class);
+    }
+
+    public function giftCards()
+    {
+        return $this->hasMany(GiftCard::class, "cart_id", "id");
     }
     
 }

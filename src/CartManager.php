@@ -216,7 +216,7 @@ class CartManager {
     public function getCart(): ?Cart
     {
 
-        return Cart::with('informations', 'informations.deliveryPoint', 'vouchers', 'cartItem')->find($this->cartId);
+        return Cart::with('informations', 'informations.deliveryPoint', 'vouchers', 'cartItem', 'giftCards')->find($this->cartId);
 
     }
     
@@ -466,6 +466,11 @@ class CartManager {
 
             foreach($cart->cartItem as $item){
 				$item->delete();
+			}
+
+            foreach($cart->giftCards as $giftCard){
+				$giftCard->cart_id = NULL;
+                $giftCard->save();
 			}
 
             $cart->delete();
