@@ -335,19 +335,19 @@ class CartManager {
 
         $userId = Auth::id() ?: false;
         $sessionId = Session::get('cart_session_id');
-        $cart_for_user = Cart::with('informations', 'cartItem')->where('user_id', $userId)->first();
-        $cart_for_session = Cart::with('informations', 'cartItem')->where('id', $sessionId)->first();
 
-        if($cart_for_user){
-
-            return $this->cartId = $cart_for_user->id;
-
+        if($userId){
+            $cart_for_user = Cart::with('informations', 'cartItem')->where('user_id', $userId)->first();
+            if($cart_for_user){
+                return $this->cartId = $cart_for_user->id;
+            }
         }
 
-        if($cart_for_session){
-
-            return $this->cartId = $cart_for_session->id;
-
+        if($sessionId){
+            $cart_for_session = Cart::with('informations', 'cartItem')->where('id', $sessionId)->first();
+            if($cart_for_session){
+                return $this->cartId = $cart_for_session->id;
+            }
         }
 
         return false;
